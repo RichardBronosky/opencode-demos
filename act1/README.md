@@ -51,7 +51,7 @@ Tells OpenCode which model to use:
 - `"model"` — sets the target model; OpenCode will prompt you to authenticate
   with GitHub Copilot when it starts because no `auth.json` is present yet
 
-### `FLOW.md`
+### `DEMO.md`
 
 Step-by-step walkthrough of the interactive auth flow inside the container:
 opening the model selector, filtering to GitHub Copilot, completing the
@@ -62,7 +62,7 @@ the live demo.
 
 1. Run `bash build.sh` (once; cached after the first build)
 2. Run `bash act1/run.sh` — OpenCode starts with no credentials
-3. Follow the steps in `FLOW.md` to authenticate through the GitHub device flow
+3. Follow the steps in `DEMO.md` to authenticate through the GitHub device flow
 4. Exit OpenCode — `run.sh` prints the credential files now present on the host
 5. Optional: copy the resulting dirs to any machine for an instant authenticated install
 

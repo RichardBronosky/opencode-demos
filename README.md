@@ -1,8 +1,15 @@
 # OpenCode in Docker — Live Demo
 
-Three acts showing how to install [OpenCode](https://opencode.ai) in a Docker
-container, authenticate it with GitHub Copilot, and run it against a fully local
-model — all without touching your personal OpenCode config.
+Three acts showing how to run [OpenCode](https://opencode.ai) in a Docker
+container — from first login to controlling your host terminal from inside the
+sandbox.
+
+The headline trick: **a sandboxed AI agent reaches through a volume-mounted tmux
+socket to discover, inspect, and operate terminal panes on the host.** The
+container has no access to the host filesystem or network. The only bridge is a
+single Unix socket — and that's enough for the agent to list sessions, read pane
+contents, send keystrokes, and resize panes it has never seen before. It figures
+all of this out from a cold-start prompt with zero prior context about the host.
 
 ## Prerequisites
 
@@ -45,7 +52,7 @@ built without any extra CA trust.
 | Act | Script | Visual walkthrough |
 | --- | ------ | ------------------ |
 | Act 1 — Fresh auth | `bash act1/run.sh` | [act1/DEMO.md](act1/DEMO.md) |
-| Act 2 — Pre-authenticated + btop | `bash act2/00-start-container.sh` | [act2/DEMO.md](act2/DEMO.md) |
+| Act 2 — Pre-authenticated + tmux socket | `bash act2/00-start-container.sh` | [act2/DEMO.md](act2/DEMO.md) |
 | Act 3 — Local model | `bash act3/run.sh` | [act3/DEMO.md](act3/DEMO.md) |
 
 ### (Optional) Presenter guide — `demo.sh`
@@ -93,13 +100,33 @@ cp -r act1/local/share/opencode ~/.local/share/opencode
 
 ---
 
-## Act 2 — Pre-authenticated (mount your creds)
+## Act 2 — Pre-authenticated + tmux socket forwarding
 
 > "I already have GitHub Copilot credentials. How do I just bring them in?"
 
-Two host directories are volume-mounted into the container at the paths OpenCode
-expects. No login flow required inside the container. This act uses the
-credentials that Act 1 produced.
+Credentials are volume-mounted in — no login flow required. But Act 2's real
+purpose is demonstrating what happens when you give a sandboxed AI agent a
+controlled escape hatch.
+
+**How it works:** The host's tmux Unix socket is bind-mounted into the container.
+The container is otherwise fully sandboxed — no host filesystem access, no
+special networking. But through that single socket, OpenCode can talk to the
+host's tmux server as if it were a local process. It can list sessions, capture
+pane contents, send keystrokes, and resize panes.
+
+**What the agent does (from a cold-start prompt, zero prior context):**
+
+1. Discovers the tmux socket inside the container
+2. Lists panes in the `oc-demo-act2` session and finds the one titled `collab`
+3. Captures the pane state and notices it's **not at a clean prompt** — `pwd` is
+   typed but unsent — and reports this instead of blindly sending keys
+4. After you acknowledge, clears the pending input and launches `btop`
+5. `btop` fails with "terminal too small" — the pane is only 12 rows
+6. Captures the error, resizes the pane, and relaunches `btop` successfully
+
+The agent is doing all of this on the **host's** terminal from inside a Docker
+container. It has no filesystem access to the host, no SSH, no network escape.
+Just a Unix socket.
 
 ```
 act2/

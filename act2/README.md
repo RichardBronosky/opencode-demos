@@ -6,6 +6,22 @@ OpenCode runs inside a Docker container with your host credentials volume-mounte
 in. No login flow inside the container — it starts authenticated and ready. This
 act builds on Act 1: you use the credentials that Act 1 produced.
 
+### The interesting part: tmux socket forwarding
+
+The container is sandboxed — no access to the host filesystem or network beyond
+what Docker provides. But one volume mount changes everything: the host's **tmux
+Unix socket** (`/tmp/tmux-<uid>/default`) is bind-mounted into the container at
+the same path.
+
+This gives the containerized AI agent a controlled escape hatch. OpenCode can
+list sessions, inspect pane contents, send keystrokes, and resize panes on the
+**host's** tmux server — all from inside the sandbox. The agent doesn't know any
+of this ahead of time; it discovers the socket, figures out which pane to target,
+and operates on it using only the cold-start prompt you give it.
+
+The demo deliberately sets up a "dirty" pane (a half-typed command) to test
+whether the agent notices before blindly sending keys. It does.
+
 **Prerequisite:** the demo Docker image must be built before running this act.
 
 ```bash

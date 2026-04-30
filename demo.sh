@@ -73,7 +73,7 @@ next_menu() {
   echo
   info "[b] Build — Docker image (one-time prerequisite)"
   info "[1] Act 1 — Fresh auth → portable config"
-  info "[2] Act 2 — Pre-authenticated (mount your creds)"
+  info "[2] Act 2 — Pre-authenticated + tmux socket forwarding"
   info "[3] Act 3 — Local model (no cloud, no credentials)"
   info "[q] Exit"
   echo
@@ -135,7 +135,7 @@ act1() {
   info "  4. Visit https://github.com/login/device and enter the code shown"
   info "  5. Select Claude Sonnet 4.6 → Default"
   info ""
-  info "See $(bold 'act1/FLOW.md') for a detailed step-by-step walkthrough."
+  info "See $(bold 'act1/DEMO.md') for a detailed step-by-step walkthrough."
   pause
 
   step "Verify and exit"
@@ -154,9 +154,14 @@ act1() {
 # ── act 2 ────────────────────────────────────────────────────────────────────
 
 act2() {
-  head_ "Act 2 — Pre-authenticated (mount your creds)"
+  head_ "Act 2 — Pre-authenticated + tmux socket forwarding"
   info "OpenCode runs inside Docker with credentials volume-mounted from the host."
-  info "No login flow required — it starts cold but already authenticated."
+  info "No login flow required — it starts already authenticated."
+  info ""
+  info "The interesting part: the host's tmux socket is also mounted in, giving"
+  info "the sandboxed agent a controlled escape hatch to discover, inspect, and"
+  info "operate terminal panes on the host — all from inside the container."
+  info ""
   info "We will prompt it to launch btop, handle the 'terminal too small' error,"
   info "resize the pane, and see btop succeed."
   pause

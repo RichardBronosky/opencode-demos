@@ -14,18 +14,29 @@
 #   bash server.sh doctor       # check prerequisites
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Aliases are not exported to subshells, so 'docker' may only exist as an alias
+# in the user's interactive shell (e.g. aliased to podman). Detect the real binary.
+DOCKER=$(command -v docker 2>/dev/null || command -v podman 2>/dev/null || true)
+if [[ -z "$DOCKER" ]]; then
+  echo "ERROR: neither docker nor podman found in PATH." >&2
+  exit 1
+fi
+
 CONTAINER_NAME="oc-demo-web"
 PORT=8000
-URL="http://localhost:${PORT}/"
+# Use 127.0.0.1 explicitly — podman's passt backend accepts IPv6 connections
+# on [::1] but immediately resets them; IPv4 is the only reliable loopback.
+URL="http://127.0.0.1:${PORT}/"
 
 # ── helpers ────────────────────────────────────────────────────────────────────
 
 is_running() {
-  docker inspect --format '{{.State.Running}}' "$CONTAINER_NAME" 2>/dev/null | grep -q '^true$'
+  $DOCKER inspect --format '{{.State.Running}}' "$CONTAINER_NAME" 2>/dev/null | grep -q '^true$'
 }
 
 container_exists() {
-  docker inspect "$CONTAINER_NAME" &>/dev/null
+  $DOCKER inspect "$CONTAINER_NAME" &>/dev/null
 }
 
 open_browser() {
@@ -51,14 +62,14 @@ cmd_doctor() {
   echo "=== Doctor ==="
   local ok=1
 
-  if command -v docker &>/dev/null; then
-    echo "  [OK] docker found: $(docker --version)"
+  if command -v docker &>/dev/null || command -v podman &>/dev/null; then
+    echo "  [OK] container engine found: $DOCKER ($($DOCKER --version))"
   else
-    echo "  [FAIL] docker not found"
+    echo "  [FAIL] neither docker nor podman found"
     ok=0
   fi
 
-  if docker info &>/dev/null; then
+  if $DOCKER info &>/dev/null; then
     echo "  [OK] Docker daemon is running"
   else
     echo "  [FAIL] Docker daemon is not running"
@@ -94,7 +105,7 @@ cmd_status() {
   if is_running; then
     echo "  [RUNNING]  ${URL}"
     echo ""
-    docker ps --filter "name=^${CONTAINER_NAME}$" --format "  container: {{.ID}}  uptime: {{.Status}}"
+    $DOCKER ps --filter "name=^${CONTAINER_NAME}$" --format "  container: {{.ID}}  uptime: {{.Status}}"
   elif container_exists; then
     echo "  [STOPPED]  Container '${CONTAINER_NAME}' exists but is not running."
     echo "             Run: bash server.sh start"
@@ -110,16 +121,16 @@ cmd_start() {
     return 0
   fi
 
-  # Remove a stopped container with the same name so docker run doesn't conflict
+  # Remove a stopped container with the same name so the engine doesn't conflict
   if container_exists; then
     echo "  Removing stopped container '${CONTAINER_NAME}'..."
-    docker rm "$CONTAINER_NAME" &>/dev/null
+    $DOCKER rm "$CONTAINER_NAME" &>/dev/null
   fi
 
   echo "  Starting web server..."
-  docker run -d \
+  $DOCKER run -d \
     --name "$CONTAINER_NAME" \
-    --publish "${PORT}:${PORT}" \
+    --publish "127.0.0.1:${PORT}:${PORT}" \
     --volume "${SCRIPT_DIR}:/srv:ro" \
     --workdir /srv \
     python:3-alpine \
@@ -152,8 +163,8 @@ cmd_stop() {
   fi
 
   echo "  Stopping server..."
-  docker stop "$CONTAINER_NAME" &>/dev/null
-  docker rm   "$CONTAINER_NAME" &>/dev/null
+  $DOCKER stop "$CONTAINER_NAME" &>/dev/null
+  $DOCKER rm   "$CONTAINER_NAME" &>/dev/null
   echo "  Server stopped."
 }
 
@@ -167,7 +178,7 @@ cmd_logs() {
     echo "  No container named '${CONTAINER_NAME}' — has the server been started?"
     return 1
   fi
-  docker logs -f "$CONTAINER_NAME"
+  $DOCKER logs -f "$CONTAINER_NAME"
 }
 
 cmd_open() {
