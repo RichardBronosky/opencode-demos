@@ -251,14 +251,25 @@
 </div>
 
 <script>
+  // ── path helpers ───────────────────────────────────────────────────────────
+  // Resolve a relative URL against a base file path (e.g. 'act1/DEMO.md').
+  // Handles ../ correctly so images and links in subdirectory markdown files
+  // resolve to the right repo-root-relative path regardless of the page's
+  // own URL (which differs between localhost and GitHub Pages /opencode-demos/).
+  function resolvePath(baseFile, rel) {
+    if (!rel || /^(https?:\/\/|\/\/|#|mailto:)/.test(rel)) return rel;
+    const dir = baseFile.includes('/') ? baseFile.slice(0, baseFile.lastIndexOf('/') + 1) : '';
+    const parts = (dir + rel).split('/');
+    const out = [];
+    for (const p of parts) {
+      if (p === '..') out.pop();
+      else if (p !== '.') out.push(p);
+    }
+    return out.join('/');
+  }
+
   // ── marked config ──────────────────────────────────────────────────────────
   marked.setOptions({
-    highlight: (code, lang) => {
-      if (lang && hljs.getLanguage(lang)) {
-        return hljs.highlight(code, { language: lang }).value;
-      }
-      return hljs.highlightAuto(code).value;
-    },
     breaks: false,
     gfm: true,
   });
@@ -281,6 +292,28 @@
     hint.style.display = 'none';
     content.querySelectorAll(':not(#loading):not(#serve-hint)').forEach(el => el.remove());
 
+    // Custom renderer: resolve images and links relative to the fetched file's
+    // directory so that ../assets/ paths work whether served from / or /subpath/.
+    // Cross-file .md links are converted to hash links so the SPA handles them.
+    const renderer = new marked.Renderer();
+
+    renderer.image = function({ href, title, text }) {
+      const src = resolvePath(path, href);
+      const t   = title ? ` title="${title}"` : '';
+      return `<img src="${src}" alt="${text}"${t}>`;
+    };
+
+    renderer.link = function({ href, title, text }) {
+      const resolved = resolvePath(path, href);
+      const t = title ? ` title="${title}"` : '';
+      // Convert same-repo .md links into hash navigation
+      if (resolved.endsWith('.md') && !resolved.startsWith('http')) {
+        return `<a href="#${resolved}"${t}>${text}</a>`;
+      }
+      const ext = /^https?:\/\//.test(resolved) ? ' target="_blank" rel="noopener"' : '';
+      return `<a href="${resolved}"${t}${ext}>${text}</a>`;
+    };
+
     try {
       const res = await fetch(path);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -288,7 +321,7 @@
       loading.style.display = 'none';
 
       const article = document.createElement('article');
-      article.innerHTML = marked.parse(md);
+      article.innerHTML = marked.parse(md, { renderer });
 
       // re-run hljs on any pre>code blocks marked didn't highlight
       article.querySelectorAll('pre code:not(.hljs)').forEach(el => hljs.highlightElement(el));
