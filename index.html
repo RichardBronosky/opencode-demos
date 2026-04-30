@@ -297,10 +297,21 @@
     // Cross-file .md links are converted to hash links so the SPA handles them.
     const renderer = new marked.Renderer();
 
-    renderer.image = function({ href, title, text }) {
+    renderer.image = function(href, title, text) {
       const src = resolvePath(path, href);
       const t   = title ? ` title="${title}"` : '';
       return `<img src="${src}" alt="${text}"${t}>`;
+    };
+
+    renderer.link = function(href, title, text) {
+      const resolved = resolvePath(path, href);
+      const t = title ? ` title="${title}"` : '';
+      // Convert same-repo .md links into hash navigation
+      if (resolved && resolved.endsWith('.md') && !resolved.startsWith('http')) {
+        return `<a href="#${resolved}"${t}>${text}</a>`;
+      }
+      const ext = /^https?:\/\//.test(resolved) ? ' target="_blank" rel="noopener"' : '';
+      return `<a href="${resolved}"${t}${ext}>${text}</a>`;
     };
 
     renderer.link = function({ href, title, text }) {
