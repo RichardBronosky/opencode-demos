@@ -1,0 +1,14 @@
+# Transient Zscaler cert copied into build context by build_image() in lib.sh.
+# Never committed — presence depends on the host network environment.
+zscaler-root-ca.crt
+
+# OpenCode auth token — contains live OAuth credentials
+act1/local/share/opencode/auth.json
+act2/local/
+
+# OpenCode runtime data written by the container (logs, db, sessions, state)
+act1/local/share/opencode/log/
+act1/local/share/opencode/opencode.db*
+act1/local/share/opencode/storage/
+act1/local/state/
+act1/local/opencode/
