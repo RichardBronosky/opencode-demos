@@ -314,17 +314,6 @@
       return `<a href="${resolved}"${t}${ext}>${text}</a>`;
     };
 
-    renderer.link = function({ href, title, text }) {
-      const resolved = resolvePath(path, href);
-      const t = title ? ` title="${title}"` : '';
-      // Convert same-repo .md links into hash navigation
-      if (resolved.endsWith('.md') && !resolved.startsWith('http')) {
-        return `<a href="#${resolved}"${t}>${text}</a>`;
-      }
-      const ext = /^https?:\/\//.test(resolved) ? ' target="_blank" rel="noopener"' : '';
-      return `<a href="${resolved}"${t}${ext}>${text}</a>`;
-    };
-
     try {
       const res = await fetch(path);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
