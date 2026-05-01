@@ -87,5 +87,5 @@ echo ""
 
 $DOCKER run -it --rm "${USERNS_ARGS[@]}" \
   --network=host \
-  -v "${SCRIPT_DIR}/config/opencode:/home/oc/.config/opencode:ro" \
+  -v "${SCRIPT_DIR}/config/opencode:/home/oc/.config/opencode" \
   "$DEMO_IMAGE"
