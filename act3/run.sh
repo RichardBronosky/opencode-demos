@@ -85,7 +85,7 @@ echo "=== Act 3: OpenCode + local model (${MODEL}) ==="
 echo "    No tokens leave this machine."
 echo ""
 
-docker run -it --rm \
+$DOCKER run -it --rm "${USERNS_ARGS[@]}" \
   --network=host \
   -v "${SCRIPT_DIR}/config/opencode:/home/oc/.config/opencode:ro" \
   "$DEMO_IMAGE"

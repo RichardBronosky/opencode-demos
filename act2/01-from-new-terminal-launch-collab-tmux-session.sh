@@ -40,10 +40,19 @@ tmux new-session -d -s "$SESSION" "\
 # Disable mouse only for this session so copy-paste works normally
 tmux set -t "$SESSION" mouse off
 
-# Bottom pane: collab (for the oc agent to operate), 8 rows tall
+# Bottom pane: collab (for the oc agent to operate), 12 rows tall.
+# The pane is intentionally small — btop will refuse to start, giving the
+# agent something to detect and fix.
 tmux split-window -v -l 12 -t "$SESSION"
 tmux select-pane -T "collab" -t "${SESSION}:{end}"
-COLLAB_PANE=$(tmux list-panes -t "$SESSION" -F "#{pane_id} #{pane_title}" | awk '/collab/{print $1}')
+COLLAB_PANE="${SESSION}:0.1"
+
+# Re-apply the 12-row height after the client attaches: the terminal's resize
+# event fires on attach and would otherwise override the -l 12 set above.
+# client-resized fires after the dimension update, so the resize sticks.
+tmux set-hook -t "$SESSION" client-resized \
+  "resize-pane -t '${SESSION}:0.1' -y 12 ; set-hook -u -t '${SESSION}' client-resized"
+
 sleep 2
 tmux send-keys -t "$COLLAB_PANE" 'ls -la' Enter
 # The following creates a problem for our agent to detect. The command is typed, but without sending Enter.

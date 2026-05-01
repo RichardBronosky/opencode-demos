@@ -45,7 +45,7 @@ if [[ -f "$AUTH_JSON" ]]; then
   echo ""
 fi
 
-docker run -it --rm \
+$DOCKER run -it --rm "${USERNS_ARGS[@]}" \
   -v "${SCRIPT_DIR}/config/opencode:/home/oc/.config/opencode" \
   -v "${SCRIPT_DIR}/local:/home/oc/.local" \
   "$DEMO_IMAGE"

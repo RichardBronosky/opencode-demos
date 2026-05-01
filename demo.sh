@@ -31,8 +31,8 @@ check_prereqs() {
   head_ "Prerequisites"
   local ok=true
 
-  if docker info &>/dev/null; then
-    info "$(bold 'docker') ✓  ($(docker --version | head -1))"
+  if $DOCKER info &>/dev/null; then
+    info "$(bold 'docker') ✓  ($($DOCKER --version | head -1))"
   else
     warn "docker — not found or daemon not running"
     ok=false

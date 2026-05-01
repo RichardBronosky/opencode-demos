@@ -22,7 +22,7 @@ require_image || exit 1
 
 ensure_owned "${SCRIPT_DIR}/local"
 
-docker run -it --rm \
+$DOCKER run -it --rm "${USERNS_ARGS[@]}" \
   -v "${SCRIPT_DIR}/config/opencode:/home/oc/.config/opencode:ro" \
   -v "${SCRIPT_DIR}/local:/home/oc/.local" \
   -v "${TMUX_SOCKET}:${TMUX_SOCKET}" \
