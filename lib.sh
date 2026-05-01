@@ -43,6 +43,20 @@ offer_terminal() {
       if command -v "$candidate" &>/dev/null; then
         term_cmd="$candidate"
         term_name="$candidate"
+        case "$candidate" in
+          alacritty)
+            launch_args=(--option 'window.dimensions.columns=220' --option 'window.dimensions.lines=50')
+            ;;
+          kitty)
+            launch_args=(--override initial_window_width=220c --override initial_window_height=50c)
+            ;;
+          gnome-terminal)
+            launch_args=(--geometry=220x50)
+            ;;
+          konsole|xfce4-terminal|lxterminal|urxvt|xterm)
+            launch_args=(-geometry 220x50)
+            ;;
+        esac
         break
       fi
     done
