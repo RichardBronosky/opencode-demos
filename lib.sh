@@ -45,16 +45,16 @@ offer_terminal() {
         term_name="$candidate"
         case "$candidate" in
           alacritty)
-            launch_args=(--option 'window.dimensions.columns=220' --option 'window.dimensions.lines=50')
+            launch_args=(--option 'window.dimensions.columns=100' --option 'window.dimensions.lines=40')
             ;;
           kitty)
-            launch_args=(--override initial_window_width=220c --override initial_window_height=50c)
+            launch_args=(--override initial_window_width=100c --override initial_window_height=40c)
             ;;
           gnome-terminal)
-            launch_args=(--geometry=220x50)
+            launch_args=(--geometry=100x40)
             ;;
           konsole|xfce4-terminal|lxterminal|urxvt|xterm)
-            launch_args=(-geometry 220x50)
+            launch_args=(-geometry 100x40)
             ;;
         esac
         break
